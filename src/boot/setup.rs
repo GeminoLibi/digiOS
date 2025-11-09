@@ -41,15 +41,108 @@ impl SetupWizard {
     }
 
     async fn select_model() -> Result<()> {
-        println!("\nModel Selection:");
-        println!("1. Small (Fast, ~1GB)");
-        println!("2. Medium (Balanced, ~4GB)");
-        println!("3. Large (Best quality, ~8GB+)");
-        print!("Select model size [2]: ");
-        io::stdout().flush()?;
+        use crate::model::detector::{ModelDetector, ModelProvider};
         
-        // Default to medium
-        info!("Model: Medium (Balanced)");
+        println!("\nModel Selection:");
+        
+        // Detect installed models
+        let detector = ModelDetector::new();
+        let detected_models = detector.detect_models().await?;
+        
+        if !detected_models.is_empty() {
+            println!("\nFound {} installed model(s) on your system:", detected_models.len());
+            println!();
+            
+            for (i, model) in detected_models.iter().enumerate() {
+                let size_str = ModelDetector::format_size(model.size);
+                let provider_str = match &model.provider {
+                    ModelProvider::Ollama => "Ollama",
+                    ModelProvider::LMStudio => "LM Studio",
+                    ModelProvider::HuggingFace => "Hugging Face",
+                    ModelProvider::LocalFile => "Local File",
+                    ModelProvider::OpenAI => "OpenAI API",
+                    ModelProvider::Anthropic => "Anthropic API",
+                    ModelProvider::Other(name) => name,
+                };
+                
+                println!("  {}. {} ({}) - {}", 
+                    i + 1, 
+                    model.name, 
+                    provider_str,
+                    size_str
+                );
+                println!("     {}", model.description);
+                println!("     Path: {:?}", model.path);
+                println!();
+            }
+            
+            println!("Options:");
+            println!("  [1-{}] - Use detected model", detected_models.len());
+            println!("  d - Download new model (placeholder)");
+            println!("  s - Skip model setup for now");
+            print!("\nSelect option: ");
+            io::stdout().flush()?;
+            
+            // For now, default to first detected model
+            // TODO: Read user input
+            if let Some(first_model) = detected_models.first() {
+                info!("Selected model: {} ({:?})", first_model.name, first_model.path);
+                println!("Using: {}", first_model.name);
+                
+                // Save selection to config
+                Self::save_model_selection(&first_model).await?;
+            } else {
+                warn!("No model selected");
+            }
+        } else {
+            println!("\nNo AI models detected on your system.");
+            println!("Options:");
+            println!("  1. Download a model (placeholder - not implemented yet)");
+            println!("  2. Skip model setup for now");
+            print!("\nSelect option [2]: ");
+            io::stdout().flush()?;
+            
+            info!("Model setup skipped - no models detected");
+            println!("Skipping model setup. You can configure a model later.");
+        }
+        
+        Ok(())
+    }
+    
+    async fn save_model_selection(model: &crate::model::detector::DetectedModel) -> Result<()> {
+        use crate::core::paths;
+        use crate::model::manager::{ModelConfig, ModelSize};
+        use serde_json;
+        use std::fs;
+        
+        let config_path = paths::get_model_config_path();
+        let config_dir = config_path.parent().unwrap();
+        fs::create_dir_all(config_dir)?;
+        
+        // Determine size based on file size if available
+        let size = if let Some(file_size) = model.size {
+            if file_size < 2_000_000_000 {
+                ModelSize::Small
+            } else if file_size < 8_000_000_000 {
+                ModelSize::Medium
+            } else {
+                ModelSize::Large
+            }
+        } else {
+            ModelSize::Medium
+        };
+        
+        let config = ModelConfig {
+            name: model.name.clone(),
+            size,
+            url: None,
+            local_path: model.path.parent().unwrap_or(&paths::get_models_dir()).to_path_buf(),
+        };
+        
+        let json = serde_json::to_string_pretty(&config)?;
+        fs::write(&config_path, json)?;
+        
+        info!("Saved model selection to: {:?}", config_path);
         Ok(())
     }
 
