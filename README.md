@@ -1,8 +1,8 @@
-# aiOS (Rust) - AI Native Operating System Interface
+# digiOS - AI Native Operating System Interface
 
 A high-performance, system-level AI operating system interface built in Rust. Provides comprehensive computer control capabilities for AI agents with native system access and optimal performance.
 
-> **Note**: This project is similar in concept to [digiOS](https://github.com/GeminoLibi/digiOS), another AI-native OS project. aiOS focuses on providing a complete, production-ready implementation with full system control capabilities.
+**digiOS** (Digital Intelligence Operating System) enables AI agents to interact with computer systems at all levels - from user interactions to system-level operations, with the goal of creating a true AI-native operating system interface.
 
 ## Why Rust?
 
@@ -98,9 +98,12 @@ curl http://localhost:8765/api/vision/screenshot
 
 This is a foundational implementation. Core architecture is in place with:
 - ✅ Module structure
-- ✅ ✅ API Server framework
+- ✅ API Server framework
 - ✅ Action Engine structure
 - ✅ State management foundation
+- ✅ Event system architecture
+- ✅ Memory system structure
+- ✅ Task planning framework
 
 **TODO**: Implement full functionality for:
 - Mouse/keyboard control
@@ -111,16 +114,25 @@ This is a foundational implementation. Core architecture is in place with:
 - Vision analysis
 - Task planning
 
-## Comparison with Python Version
+## Architecture
 
-| Feature | Python Version | Rust Version |
-|---------|---------------|--------------|
-| Performance | Good | Excellent |
-| Memory Usage | Higher | Lower |
-| System Access | Via libraries | Direct APIs |
-| Kernel Ops | Limited | Full potential |
-| Development Speed | Faster | Slower |
-| Runtime Safety | Runtime checks | Compile-time |
+```
+digiOS Core (Rust)
+├── Action Engine      - Native system calls for actions
+├── Vision System      - Screen capture and analysis
+├── State Manager      - System state tracking
+├── Task Planner       - Task decomposition
+├── Event System       - System event monitoring
+├── Memory System      - Persistent memory storage
+└── API Server         - HTTP/WebSocket interface
+```
+
+## Performance Benefits
+
+- **Lower Latency**: Direct system calls, no interpreter overhead
+- **Lower Memory**: No garbage collection, efficient memory usage
+- **Better Concurrency**: True parallelism with Rust's async model
+- **System Access**: Can access kernel-level APIs where permitted
 
 ## Contributing
 
