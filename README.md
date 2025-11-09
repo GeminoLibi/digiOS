@@ -2,6 +2,8 @@
 
 A high-performance, system-level AI operating system interface built in Rust. Provides comprehensive computer control capabilities for AI agents with native system access and optimal performance.
 
+> **Note**: This project is similar in concept to [digiOS](https://github.com/GeminoLibi/digiOS), another AI-native OS project. aiOS focuses on providing a complete, production-ready implementation with full system control capabilities.
+
 ## Why Rust?
 
 - **Performance**: Zero-cost abstractions, no garbage collection overhead
