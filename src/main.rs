@@ -1,5 +1,4 @@
 use aios::boot::InitSystem;
-use aios::human_interface::TerminalInterface;
 use anyhow::Result;
 use tracing::info;
 
