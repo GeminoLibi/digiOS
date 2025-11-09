@@ -47,6 +47,11 @@ This creates a system that starts minimal but grows into a full-featured AI-nati
 - **Cargo** (comes with Rust)
 - **Platform-specific build tools:**
   - **Windows**: Visual Studio Build Tools or Visual Studio with C++ support
+    - **Quick Setup**: Run `.\INSTALL_MSVC_TOOLS.ps1` for installation guide
+    - **Alternative**: Use GNU toolchain with `.\SETUP_GNU_TOOLCHAIN.ps1` (no MSVC needed)
+    - **Manual**: Download [Build Tools for Visual Studio 2022](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022)
+      - Select "Desktop development with C++" workload
+      - Install and restart terminal
   - **Linux**: `build-essential` package (gcc, make, etc.)
   - **macOS**: Xcode Command Line Tools (`xcode-select --install`)
 
