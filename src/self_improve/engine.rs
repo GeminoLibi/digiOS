@@ -77,7 +77,16 @@ impl SelfImprovementEngine {
                     match codegen.generate_code(&improvement).await {
                         Ok(code) => {
                             info!("Generated code for: {}", improvement);
-                            // TODO: Compile and integrate new code
+                            
+                            // 4. Compile and integrate the generated code
+                            match codegen.compile_and_integrate(&code).await {
+                                Ok(_) => {
+                                    info!("Successfully compiled and integrated code for: {}", improvement);
+                                }
+                                Err(e) => {
+                                    error!("Failed to compile/integrate code for {}: {}", improvement, e);
+                                }
+                            }
                         }
                         Err(e) => {
                             error!("Failed to generate code: {}", e);
