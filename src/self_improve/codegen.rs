@@ -40,7 +40,7 @@ impl CodeGenerator {
         }
     }
 
-    pub async fn compile_and_integrate(&self, code: &str) -> Result<()> {
+    pub async fn compile_and_integrate(&self, _code: &str) -> Result<()> {
         info!("Compiling and integrating generated code");
         
         // TODO: Implement

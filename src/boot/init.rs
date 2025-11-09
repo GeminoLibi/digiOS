@@ -10,7 +10,7 @@ use tracing::{info, error};
 /// Init System - First process that runs on boot
 /// Responsible for system initialization and starting core services
 pub struct InitSystem {
-    aios: Option<aiOS>,
+    aios: Option<Arc<aiOS>>,
     model_manager: Option<Arc<ModelManager>>,
     self_improve: Option<SelfImprovementEngine>,
     interaction: Option<InteractionManager>,
@@ -72,7 +72,7 @@ impl InitSystem {
         let mut aios = aiOS::new().await?;
         aios.start().await?;
         
-        self.aios = Some(aios);
+        self.aios = Some(Arc::new(aios));
         info!("Core system initialized");
         Ok(())
     }
@@ -139,12 +139,12 @@ impl InitSystem {
     async fn initialize_self_improvement(&mut self) -> Result<()> {
         info!("Initializing self-improvement engine...");
         
-        let aios = self.aios.as_ref().unwrap();
-        let model_manager = self.model_manager.as_ref().unwrap();
+        let aios = self.aios.as_ref().unwrap().clone();
+        let model_manager = self.model_manager.as_ref().unwrap().clone();
         
         let self_improve = SelfImprovementEngine::new(
-            aios.clone(),
-            model_manager.clone(),
+            aios,
+            model_manager,
         ).await?;
         
         self.self_improve = Some(self_improve);

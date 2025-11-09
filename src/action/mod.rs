@@ -1,4 +1,4 @@
 pub mod engine;
 
-pub use engine::ActionEngine;
+pub use engine::{ActionEngine, Action, ActionResult};
 

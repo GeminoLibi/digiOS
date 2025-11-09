@@ -111,8 +111,8 @@ impl ToolManager {
 
         info!("Tool '{}' not found, attempting to install...", name);
         
-        if let Some(tool) = self.tools.get(name) {
-            match self.install_tool(tool).await {
+        if let Some(tool) = self.tools.get(name).cloned() {
+            match self.install_tool(&tool).await {
                 Ok(true) => {
                     info!("Successfully installed tool: {}", name);
                     Ok(true)
@@ -198,7 +198,7 @@ impl ToolManager {
         Ok(false)
     }
 
-    async fn download_tool(&mut self, url: &str, extract: &bool) -> Result<bool> {
+    async fn download_tool(&mut self, url: &str, _extract: &bool) -> Result<bool> {
         // TODO: Implement actual download
         info!("Would download from: {}", url);
         Ok(false)

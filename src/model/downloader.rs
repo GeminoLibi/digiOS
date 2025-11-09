@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use tracing::{info, error};
 use std::io::Write;
 
+#[derive(Clone)]
 pub struct ModelDownloader;
 
 impl ModelDownloader {

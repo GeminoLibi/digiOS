@@ -63,7 +63,7 @@ impl InteractionManager {
 
     pub async fn handle_interaction(&self, input: &str) -> Result<String> {
         // Route interaction to appropriate interface
-        if let Some(ref terminal) = *self.terminal.read().await {
+        if let Some(ref _terminal) = *self.terminal.read().await {
             // Handle terminal input
             return Ok(format!("Terminal: {}", input));
         }
