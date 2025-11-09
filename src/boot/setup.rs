@@ -155,11 +155,30 @@ impl SetupWizard {
             ModelSize::Medium
         };
         
+        // Determine local_path based on model type
+        let local_path = match &model.provider {
+            crate::model::detector::ModelProvider::Ollama => {
+                // Ollama models use special path format
+                paths::get_models_dir()
+            }
+            crate::model::detector::ModelProvider::LMStudio => {
+                // LM Studio models - use the actual file path's parent
+                model.path.parent().unwrap_or(&paths::get_models_dir()).to_path_buf()
+            }
+            crate::model::detector::ModelProvider::HuggingFace => {
+                // Hugging Face models - use the model directory
+                model.path.parent().unwrap_or(&paths::get_models_dir()).to_path_buf()
+            }
+            _ => {
+                model.path.parent().unwrap_or(&paths::get_models_dir()).to_path_buf()
+            }
+        };
+        
         let config = ModelConfig {
             name: model.name.clone(),
             size,
             url: None,
-            local_path: model.path.parent().unwrap_or(&paths::get_models_dir()).to_path_buf(),
+            local_path,
         };
         
         let json = serde_json::to_string_pretty(&config)?;

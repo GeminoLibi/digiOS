@@ -111,10 +111,49 @@ impl ModelManager {
     pub async fn load_model(&self) -> Result<()> {
         info!("Loading model: {}", self.config.name);
         
-        // Check if this is an Ollama model
+        // Check what type of model this is
         let model_path = if self.config.name.starts_with("ollama:") {
             // Ollama model - use special path format
             PathBuf::from(format!("ollama://{}", self.config.name.strip_prefix("ollama:").unwrap()))
+        } else if self.config.name.starts_with("lmstudio:") {
+            // LM Studio model - try to find the actual file
+            let model_name = self.config.name.strip_prefix("lmstudio:").unwrap();
+            // Search in LM Studio directory
+            let lm_dir = if cfg!(windows) {
+                PathBuf::from(std::env::var("APPDATA").unwrap_or_default())
+                    .join("Local").join("LM Studio").join("models")
+            } else if cfg!(target_os = "macos") {
+                PathBuf::from(std::env::var("HOME").unwrap_or_default())
+                    .join("Library").join("Application Support")
+                    .join("LM Studio").join("models")
+            } else {
+                PathBuf::from(std::env::var("HOME").unwrap_or_default())
+                    .join(".local").join("share").join("lm-studio").join("models")
+            };
+            
+            // Try to find the model file
+            let mut found_path = None;
+            if lm_dir.exists() {
+                if let Ok(entries) = std::fs::read_dir(&lm_dir) {
+                    for entry in entries.flatten() {
+                        let path = entry.path();
+                        if path.is_file() {
+                            let name = path.file_stem()
+                                .and_then(|n| n.to_str())
+                                .unwrap_or("");
+                            if name == model_name || path.to_string_lossy().contains(model_name) {
+                                found_path = Some(path);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            found_path.unwrap_or_else(|| self.config.local_path.join(model_name))
+        } else if self.config.name.starts_with("huggingface:") {
+            // Hugging Face model - use the path from config
+            self.config.local_path.clone()
         } else {
             // Try config name first
             let mut model_path = self.config.local_path.join(&self.config.name);
