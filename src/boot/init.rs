@@ -1,15 +1,17 @@
 use crate::core::aios::aiOS;
+use crate::core::paths;
 use crate::model::ModelManager;
 use crate::self_improve::SelfImprovementEngine;
 use crate::interaction::{InteractionManager, ToolManager};
 use anyhow::Result;
+use std::sync::Arc;
 use tracing::{info, error};
 
 /// Init System - First process that runs on boot
 /// Responsible for system initialization and starting core services
 pub struct InitSystem {
     aios: Option<aiOS>,
-    model_manager: Option<ModelManager>,
+    model_manager: Option<Arc<ModelManager>>,
     self_improve: Option<SelfImprovementEngine>,
     interaction: Option<InteractionManager>,
     tool_manager: Option<ToolManager>,
@@ -91,11 +93,21 @@ impl InitSystem {
     async fn initialize_interaction(&mut self) -> Result<()> {
         info!("Initializing interaction system...");
         
-        let mut interaction = InteractionManager::new().await?;
+        let interaction = InteractionManager::new().await?;
         
         // Check if human interface should be enabled
         if std::env::var("DIGIOS_HUMAN_INTERFACE").is_ok() {
-            interaction.start_terminal().await?;
+            // Start terminal in background task
+            let terminal_arc = interaction.terminal.clone();
+            tokio::spawn(async move {
+                if let Ok(mut terminal) = terminal_arc.write().await {
+                    if let Some(ref mut term) = *terminal {
+                        if let Err(e) = term.start().await {
+                            error!("Terminal interface error: {}", e);
+                        }
+                    }
+                }
+            });
         }
         
         self.interaction = Some(interaction);
@@ -120,7 +132,7 @@ impl InitSystem {
         model_manager.load_model().await?;
         info!("Model loaded and ready");
         
-        self.model_manager = Some(model_manager);
+        self.model_manager = Some(Arc::new(model_manager));
         Ok(())
     }
 
@@ -164,7 +176,7 @@ impl InitSystem {
     /// Check if this is first boot (setup needed)
     pub async fn is_first_boot(&self) -> bool {
         // Check for setup flag or config file
-        !std::path::Path::new("/etc/digios/setup_complete").exists()
+        !paths::get_setup_complete_path().exists()
     }
 
     /// Run first-boot setup
@@ -172,13 +184,13 @@ impl InitSystem {
         info!("Running first-boot setup...");
         
         // Create setup directory
-        std::fs::create_dir_all("/etc/digios")?;
+        std::fs::create_dir_all(paths::get_config_dir())?;
         
         // Run setup wizard
         crate::boot::setup::SetupWizard::run().await?;
         
         // Mark setup as complete
-        std::fs::write("/etc/digios/setup_complete", "1")?;
+        std::fs::write(paths::get_setup_complete_path(), "1")?;
         
         info!("Setup complete");
         Ok(())

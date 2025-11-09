@@ -27,6 +27,18 @@ impl InteractionManager {
     pub async fn start_terminal(&self) -> Result<()> {
         info!("Starting terminal interface");
         let terminal = TerminalInterface::new().await?;
+        
+        // Clone terminal for background task
+        let mut terminal_clone = terminal.clone();
+        
+        // Start terminal in background task
+        tokio::spawn(async move {
+            if let Err(e) = terminal_clone.start().await {
+                error!("Terminal interface error: {}", e);
+            }
+        });
+        
+        // Store reference
         *self.terminal.write().await = Some(terminal);
         Ok(())
     }

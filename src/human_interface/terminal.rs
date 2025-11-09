@@ -3,6 +3,7 @@ use tracing::info;
 use std::io::{self, Write};
 
 /// Terminal Interface - Allows humans to interact with digiOS
+#[derive(Clone)]
 pub struct TerminalInterface {
     running: bool,
 }

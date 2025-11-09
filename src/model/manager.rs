@@ -1,5 +1,6 @@
 use crate::model::downloader::ModelDownloader;
 use crate::model::loader::ModelLoader;
+use crate::core::paths;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -22,6 +23,7 @@ pub enum ModelSize {
     Large,   // ~8GB+
 }
 
+#[derive(Clone)]
 pub struct ModelManager {
     config: ModelConfig,
     loader: Arc<RwLock<Option<ModelLoader>>>,
@@ -31,7 +33,7 @@ pub struct ModelManager {
 impl ModelManager {
     pub async fn new() -> Result<Self> {
         // Load or create config
-        let config_path = PathBuf::from("/etc/digios/model.json");
+        let config_path = paths::get_model_config_path();
         let config = if config_path.exists() {
             let content = std::fs::read_to_string(&config_path)?;
             serde_json::from_str(&content)?
@@ -41,7 +43,7 @@ impl ModelManager {
                 name: "digios-default".to_string(),
                 size: ModelSize::Medium,
                 url: None,
-                local_path: PathBuf::from("/var/lib/digios/models"),
+                local_path: paths::get_models_dir(),
             }
         };
 
