@@ -1,7 +1,7 @@
 use crate::model::ModelManager;
 use anyhow::Result;
 use std::sync::Arc;
-use tracing::{info, error};
+use tracing::{info, error, warn};
 
 /// Code Generator - Uses AI model to generate code improvements
 pub struct CodeGenerator {
