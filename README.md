@@ -24,8 +24,12 @@ A high-performance, system-level AI operating system interface built in Rust. Pr
 
 ### Prerequisites
 
-- Rust 1.70+ (install from [rustup.rs](https://rustup.rs/))
-- Cargo (comes with Rust)
+- **Rust 1.70+** ([install from rustup.rs](https://rustup.rs/))
+- **Cargo** (comes with Rust)
+- **Platform-specific build tools:**
+  - **Windows**: Visual Studio Build Tools or Visual Studio with C++ support
+  - **Linux**: `build-essential` package (gcc, make, etc.)
+  - **macOS**: Xcode Command Line Tools (`xcode-select --install`)
 
 ### Build
 
