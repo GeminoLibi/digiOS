@@ -36,7 +36,11 @@ impl ModelManager {
         let config_path = paths::get_model_config_path();
         let config = if config_path.exists() {
             let content = std::fs::read_to_string(&config_path)?;
-            serde_json::from_str(&content)?
+            let mut config: ModelConfig = serde_json::from_str(&content)
+                .map_err(|e| anyhow::anyhow!("Failed to parse model.json: {} (content: {})", e, content.trim()))?;
+            // Ensure local_path is correct for current platform
+            config.local_path = paths::get_models_dir();
+            config
         } else {
             // Default config
             ModelConfig {
