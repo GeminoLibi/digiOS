@@ -11,6 +11,8 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing::{info, error};
 
+
+#[derive(Clone)]
 pub struct aiOS {
     config: Config,
     action_engine: Arc<ActionEngine>,
