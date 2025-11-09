@@ -25,15 +25,8 @@ async fn main() -> Result<()> {
     // Boot the system
     init.boot().await?;
 
-    // Start human interface if enabled
-    // Check for human interaction flag
-    if std::env::var("DIGIOS_HUMAN_INTERFACE").is_ok() {
-        tokio::spawn(async {
-            if let Err(e) = TerminalInterface::start().await {
-                error!("Terminal interface error: {}", e);
-            }
-        });
-    }
+    // Interaction system is started by init system
+    // Human interface will be enabled if DIGIOS_HUMAN_INTERFACE is set
 
     // Keep running until interrupted
     tokio::signal::ctrl_c().await?;

@@ -10,7 +10,10 @@ pub mod boot;
 pub mod model;
 pub mod self_improve;
 pub mod human_interface;
+pub mod interaction;
 
 pub use core::aios::aiOS;
 pub use boot::InitSystem;
+pub use interaction::InteractionManager;
+pub use interaction::ToolManager;
 

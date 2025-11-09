@@ -1,6 +1,7 @@
 use crate::core::aios::aiOS;
 use crate::model::ModelManager;
 use crate::self_improve::SelfImprovementEngine;
+use crate::interaction::{InteractionManager, ToolManager};
 use anyhow::Result;
 use tracing::{info, error};
 
@@ -10,6 +11,8 @@ pub struct InitSystem {
     aios: Option<aiOS>,
     model_manager: Option<ModelManager>,
     self_improve: Option<SelfImprovementEngine>,
+    interaction: Option<InteractionManager>,
+    tool_manager: Option<ToolManager>,
 }
 
 impl InitSystem {
@@ -19,6 +22,8 @@ impl InitSystem {
             aios: None,
             model_manager: None,
             self_improve: None,
+            interaction: None,
+            tool_manager: None,
         })
     }
 
@@ -30,20 +35,28 @@ impl InitSystem {
         info!("Phase 1: System Initialization");
         self.initialize_system().await?;
         
-        // Phase 2: Model setup
-        info!("Phase 2: Model Setup");
+        // Phase 2: Tool setup
+        info!("Phase 2: Tool Setup");
+        self.setup_tools().await?;
+        
+        // Phase 3: Model setup
+        info!("Phase 3: Model Setup");
         self.setup_model().await?;
         
-        // Phase 3: Start core services
-        info!("Phase 3: Starting Core Services");
+        // Phase 4: Start core services
+        info!("Phase 4: Starting Core Services");
         self.start_core_services().await?;
         
-        // Phase 4: Initialize self-improvement
-        info!("Phase 4: Initializing Self-Improvement Engine");
+        // Phase 5: Initialize interaction
+        info!("Phase 5: Initializing Interaction System");
+        self.initialize_interaction().await?;
+        
+        // Phase 6: Initialize self-improvement
+        info!("Phase 6: Initializing Self-Improvement Engine");
         self.initialize_self_improvement().await?;
         
-        // Phase 5: Begin recursive building
-        info!("Phase 5: Beginning Recursive Self-Building");
+        // Phase 7: Begin recursive building
+        info!("Phase 7: Beginning Recursive Self-Building");
         self.begin_recursive_building().await?;
         
         info!("=== digiOS Boot Complete ===");
@@ -59,6 +72,34 @@ impl InitSystem {
         
         self.aios = Some(aios);
         info!("Core system initialized");
+        Ok(())
+    }
+
+    async fn setup_tools(&mut self) -> Result<()> {
+        info!("Setting up tools and compatibility layer...");
+        
+        let mut tool_manager = ToolManager::new();
+        
+        // Ensure all required tools are available
+        tool_manager.ensure_all_required().await?;
+        
+        self.tool_manager = Some(tool_manager);
+        info!("Tools setup complete");
+        Ok(())
+    }
+
+    async fn initialize_interaction(&mut self) -> Result<()> {
+        info!("Initializing interaction system...");
+        
+        let mut interaction = InteractionManager::new().await?;
+        
+        // Check if human interface should be enabled
+        if std::env::var("DIGIOS_HUMAN_INTERFACE").is_ok() {
+            interaction.start_terminal().await?;
+        }
+        
+        self.interaction = Some(interaction);
+        info!("Interaction system initialized");
         Ok(())
     }
 

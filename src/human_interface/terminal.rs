@@ -3,16 +3,25 @@ use tracing::info;
 use std::io::{self, Write};
 
 /// Terminal Interface - Allows humans to interact with digiOS
-pub struct TerminalInterface;
+pub struct TerminalInterface {
+    running: bool,
+}
 
 impl TerminalInterface {
-    pub async fn start() -> Result<()> {
+    pub async fn new() -> Result<Self> {
+        Ok(Self {
+            running: false,
+        })
+    }
+
+    pub async fn start(&mut self) -> Result<()> {
         info!("Starting terminal interface");
+        self.running = true;
         
         println!("\n=== digiOS Terminal Interface ===");
         println!("Type 'help' for commands, 'exit' to quit\n");
         
-        loop {
+        while self.running {
             print!("digiOS> ");
             io::stdout().flush()?;
             
