@@ -3,6 +3,7 @@ pub mod downloader;
 pub mod loader;
 pub mod detector;
 pub mod sources;
+pub mod ollama;
 
 pub use manager::ModelManager;
 pub use detector::{ModelDetector, DetectedModel, ModelProvider};

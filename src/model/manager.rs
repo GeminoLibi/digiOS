@@ -111,46 +111,55 @@ impl ModelManager {
     pub async fn load_model(&self) -> Result<()> {
         info!("Loading model: {}", self.config.name);
         
-        // Try config name first
-        let mut model_path = self.config.local_path.join(&self.config.name);
-        
-        // If not found, try placeholder names
-        if !model_path.exists() {
-            let placeholder_names = [
-                "digios-default",
-                "digios-default-small", 
-                "digios-default-large",
-            ];
+        // Check if this is an Ollama model
+        let model_path = if self.config.name.starts_with("ollama:") {
+            // Ollama model - use special path format
+            PathBuf::from(format!("ollama://{}", self.config.name.strip_prefix("ollama:").unwrap()))
+        } else {
+            // Try config name first
+            let mut model_path = self.config.local_path.join(&self.config.name);
             
-            let mut found = false;
-            for name in &placeholder_names {
-                let test_path = self.config.local_path.join(name);
-                if test_path.exists() {
-                    model_path = test_path;
-                    found = true;
-                    info!("Found model at: {:?}", model_path);
-                    break;
+            // If not found, try placeholder names
+            if !model_path.exists() {
+                let placeholder_names = [
+                    "digios-default",
+                    "digios-default-small", 
+                    "digios-default-large",
+                ];
+                
+                let mut found = false;
+                for name in &placeholder_names {
+                    let test_path = self.config.local_path.join(name);
+                    if test_path.exists() {
+                        model_path = test_path;
+                        found = true;
+                        info!("Found model at: {:?}", model_path);
+                        break;
+                    }
+                }
+                
+                if !found {
+                    return Err(anyhow::anyhow!(
+                        "Model file not found: {:?}\n\
+                        Searched for: {} and placeholder names\n\
+                        Directory contents: {:?}",
+                        model_path,
+                        self.config.name,
+                        std::fs::read_dir(&self.config.local_path)
+                            .map(|dir| dir.map(|e| e.unwrap().file_name().to_string_lossy().to_string()).collect::<Vec<_>>())
+                            .unwrap_or_default()
+                    ));
                 }
             }
             
-            if !found {
-                return Err(anyhow::anyhow!(
-                    "Model file not found: {:?}\n\
-                    Searched for: {} and placeholder names\n\
-                    Directory contents: {:?}",
-                    model_path,
-                    self.config.name,
-                    std::fs::read_dir(&self.config.local_path)
-                        .map(|dir| dir.map(|e| e.unwrap().file_name().to_string_lossy().to_string()).collect::<Vec<_>>())
-                        .unwrap_or_default()
-                ));
-            }
-        }
+            model_path
+        };
 
-        let loader = ModelLoader::new(&model_path).await?;
+        let mut loader = ModelLoader::new(&model_path).await?;
+        loader.load().await?;
         *self.loader.write().await = Some(loader);
         
-        info!("Model loaded successfully from: {:?}", model_path);
+        info!("Model loaded successfully: {}", self.config.name);
         Ok(())
     }
 

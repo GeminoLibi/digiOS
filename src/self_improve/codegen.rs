@@ -29,16 +29,51 @@ impl CodeGenerator {
                 improvement
             );
             
-            // Try to actually call the model
-            // Check if model has inference capability
-            let mut model_guard = model;
-            
-            // For now, if model is a placeholder, return placeholder code
-            // When real model integration is added, this will call the model
-            if let Ok(response) = model_guard.infer(&prompt).await {
-                if !response.contains("TODO") && !response.is_empty() {
-                    info!("Model generated code (length: {} chars)", response.len());
-                    return Ok(response);
+            // Actually call the model for inference
+            info!("Calling model for code generation...");
+            match model.infer(&prompt).await {
+                Ok(response) => {
+                    if !response.is_empty() {
+                        info!("Model generated code (length: {} chars)", response.len());
+                        // Clean up the response - extract code if it's wrapped in markdown
+                        let code = if response.contains("```rust") {
+                            // Extract code from markdown code block
+                            if let Some(start) = response.find("```rust") {
+                                let code_start = response[start + 7..].trim_start();
+                                if let Some(end) = code_start.find("```") {
+                                    code_start[..end].trim().to_string()
+                                } else {
+                                    code_start.to_string()
+                                }
+                            } else {
+                                response
+                            }
+                        } else if response.contains("```") {
+                            // Generic code block
+                            if let Some(start) = response.find("```") {
+                                let code_start = response[start + 3..].trim_start();
+                                if let Some(end) = code_start.find("```") {
+                                    code_start[..end].trim().to_string()
+                                } else {
+                                    code_start.to_string()
+                                }
+                            } else {
+                                response
+                            }
+                        } else {
+                            response.trim().to_string()
+                        };
+                        
+                        if !code.is_empty() && !code.contains("TODO") && !code.contains("placeholder") {
+                            info!("Successfully generated real code from model");
+                            return Ok(code);
+                        } else {
+                            warn!("Model returned placeholder or empty response");
+                        }
+                    }
+                }
+                Err(e) => {
+                    error!("Model inference failed: {}", e);
                 }
             }
             
