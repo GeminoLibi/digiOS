@@ -122,16 +122,42 @@ impl ModelLoader {
             }
             info!("Python ollama client model ready: {}", self.model_name);
         } else if let Some(ref client) = self.lm_studio_client {
+            // Check if LM Studio is actually running before trying to use it
             if !client.check_available().await? {
-                return Err(anyhow::anyhow!("LM Studio server is not running. Please start LM Studio first."));
+                warn!("LM Studio server is not running. Model file exists but server unavailable.");
+                warn!("Please start LM Studio and load a model, or use a different model provider.");
+                return Err(anyhow::anyhow!(
+                    "LM Studio server is not running.\n\
+                    To use LM Studio models:\n\
+                    1. Start LM Studio application\n\
+                    2. Load a model in LM Studio\n\
+                    3. Make sure the local server is enabled (port 1234)\n\
+                    \n\
+                    Or select a different model during setup."
+                ));
             }
             info!("LM Studio model ready: {}", self.model_name);
         } else if let Some(ref client) = self.huggingface_client {
             if !client.check_available().await? {
-                return Err(anyhow::anyhow!("Hugging Face transformers library is not available."));
+                return Err(anyhow::anyhow!("Hugging Face transformers library is not available. Install with: pip install transformers"));
             }
             info!("Hugging Face model ready: {}", self.model_name);
         } else {
+            // Check if this is a placeholder file
+            if self.path.exists() && self.path.is_file() {
+                if let Ok(contents) = std::fs::read_to_string(&self.path) {
+                    if contents.contains("digiOS Model Placeholder") {
+                        return Err(anyhow::anyhow!(
+                            "Placeholder model file detected: {:?}\n\
+                            This is not a real model. Please:\n\
+                            1. Select a real model during setup, or\n\
+                            2. Download a model, or\n\
+                            3. Start LM Studio/Ollama with a loaded model",
+                            self.path
+                        ));
+                    }
+                }
+            }
             // For local file models, would load here
             info!("Local model file: {:?}", self.path);
         }
