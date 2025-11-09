@@ -1,8 +1,25 @@
-# digiOS - AI Native Operating System Interface
+# digiOS - AI Native Operating System
 
-A high-performance, system-level AI operating system interface built in Rust. Provides comprehensive computer control capabilities for AI agents with native system access and optimal performance.
+A bootable, self-improving AI-native operating system built in Rust. digiOS boots from scratch, downloads its AI model, and recursively builds itself into a complete system.
 
-**digiOS** (Digital Intelligence Operating System) enables AI agents to interact with computer systems at all levels - from user interactions to system-level operations, with the goal of creating a true AI-native operating system interface.
+**digiOS** (Digital Intelligence Operating System) is designed to be a true AI-native OS that:
+- **Boots independently** - Runs as init system (PID 1)
+- **Downloads its model** - Acquires AI capabilities on first boot
+- **Recursively builds itself** - Continuously improves and expands capabilities
+- **Supports human interaction** - Optional terminal/web/voice interfaces
+- **Self-improving** - Uses AI to generate code and enhance itself
+
+## Core Philosophy
+
+digiOS is built on the principle of **recursive self-improvement**. On boot, it:
+1. Downloads and loads its AI model
+2. Evaluates its current capabilities
+3. Identifies areas for improvement
+4. Generates code to implement improvements
+5. Compiles and integrates new code
+6. Repeats the process, building itself into a complete system
+
+This creates a system that starts minimal but grows into a full-featured AI-native operating system.
 
 ## Why Rust?
 
@@ -94,37 +111,87 @@ curl http://localhost:8765/api/vision/screenshot
 - **Linux**: Full support via system calls
 - **macOS**: Full support via Cocoa/AppKit
 
+## Boot Process
+
+1. **Bootloader** loads kernel and initramfs
+2. **Init System** starts (PID 1)
+3. **First Boot Check** - Runs setup wizard if needed
+4. **Model Download** - Downloads AI model if not present
+5. **Model Loading** - Loads model into memory
+6. **Core Initialization** - Starts all core services
+7. **Self-Improvement Start** - Begins recursive building
+8. **Human Interface** - Starts if enabled
+
+## Self-Improvement Cycle
+
+The system continuously:
+1. **Evaluates** its current state and capabilities
+2. **Identifies** areas for improvement
+3. **Generates** code using the AI model
+4. **Compiles** and tests new code
+5. **Integrates** improvements into the system
+6. **Repeats** the cycle, building itself recursively
+
 ## Development Status
 
-This is a foundational implementation. Core architecture is in place with:
-- ✅ Module structure
-- ✅ API Server framework
-- ✅ Action Engine structure
-- ✅ State management foundation
-- ✅ Event system architecture
-- ✅ Memory system structure
-- ✅ Task planning framework
+### ✅ Completed
+- Boot system architecture
+- Init system with boot sequence
+- Setup wizard for first boot
+- Model management system
+- Model downloader framework
+- Self-improvement engine architecture
+- Code generation framework
+- System evaluator
+- Human interface (terminal)
+- Core service architecture
 
-**TODO**: Implement full functionality for:
-- Mouse/keyboard control
+### 🚧 In Progress
+- Actual model integration
+- Code compilation pipeline
+- Hot-reload mechanism
+- Bootable image creation
+
+### 📋 TODO
+- Mouse/keyboard control implementation
 - Window management
 - Screenshot with cursor reticle
 - File operations
 - Process management
 - Vision analysis
 - Task planning
+- Web interface
+- Voice interface
+- Bootable image builder
 
 ## Architecture
 
 ```
-digiOS Core (Rust)
-├── Action Engine      - Native system calls for actions
-├── Vision System      - Screen capture and analysis
-├── State Manager      - System state tracking
-├── Task Planner       - Task decomposition
-├── Event System       - System event monitoring
-├── Memory System      - Persistent memory storage
-└── API Server         - HTTP/WebSocket interface
+digiOS System
+├── Boot System
+│   ├── Init System      - First process (PID 1), boot sequence
+│   ├── Setup Wizard     - First-boot configuration
+│   └── Bootloader       - Boot configuration
+├── Model System
+│   ├── Model Manager    - Model lifecycle management
+│   ├── Model Downloader - Downloads models on first boot
+│   └── Model Loader     - Loads and runs AI models
+├── Core Services
+│   ├── Action Engine    - Native system calls for actions
+│   ├── Vision System    - Screen capture and analysis
+│   ├── State Manager    - System state tracking
+│   ├── Task Planner     - Task decomposition
+│   ├── Event System     - System event monitoring
+│   ├── Memory System    - Persistent memory storage
+│   └── API Server       - HTTP/WebSocket interface
+├── Self-Improvement
+│   ├── Improvement Engine - Orchestrates self-improvement
+│   ├── Code Generator   - Generates code using AI
+│   └── System Evaluator - Evaluates and identifies improvements
+└── Human Interface
+    ├── Terminal         - Command-line interface
+    ├── Web              - Browser-based UI (future)
+    └── Voice            - Voice interaction (future)
 ```
 
 ## Performance Benefits
