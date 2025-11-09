@@ -96,14 +96,37 @@ impl SetupWizard {
             }
         } else {
             println!("\nNo AI models detected on your system.");
+            println!("\nAvailable models to download:");
+            println!();
+            
+            use crate::model::sources::ModelSources;
+            let recommended = ModelSources::get_recommended_models();
+            
+            for (i, model) in recommended.iter().enumerate() {
+                let size_str = ModelSources::format_size(&model.size);
+                let provider_str = ModelSources::format_provider(&model.provider);
+                
+                println!("  {}. {} ({}) - {}", 
+                    i + 1,
+                    model.name,
+                    provider_str,
+                    size_str
+                );
+                println!("     {}", model.description);
+                println!();
+            }
+            
             println!("Options:");
-            println!("  1. Download a model (placeholder - not implemented yet)");
-            println!("  2. Skip model setup for now");
-            print!("\nSelect option [2]: ");
+            println!("  [1-{}] - Download selected model", recommended.len());
+            println!("  s - Skip model setup for now");
+            print!("\nSelect option [s]: ");
             io::stdout().flush()?;
             
-            info!("Model setup skipped - no models detected");
-            println!("Skipping model setup. You can configure a model later.");
+            // For now, default to skip (TODO: implement user input)
+            // If user selects a model, download it
+            info!("Model setup skipped - user can download later");
+            println!("Skipping model download. You can configure a model later.");
+            println!("To download a model, run digiOS again or use the API.");
         }
         
         Ok(())

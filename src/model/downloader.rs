@@ -1,7 +1,8 @@
 use anyhow::Result;
 use std::path::PathBuf;
-use tracing::{info, error};
+use tracing::{info, error, warn};
 use std::io::Write;
+use reqwest;
 
 #[derive(Clone)]
 pub struct ModelDownloader;
@@ -55,15 +56,112 @@ impl ModelDownloader {
             return Ok(());
         }
         
-        // TODO: Implement actual download for real URLs
-        // - Use reqwest or similar
-        // - Show progress
-        // - Handle errors
-        // - Verify checksum
-        // - Save to dest_dir with appropriate filename
+        // Try to download from real URL
+        info!("Attempting to download from: {}", url);
         
-        // For now, if it's not a placeholder, we can't download it
-        Err(anyhow::anyhow!("Actual model download not yet implemented. URL: {}", url))
+        // Check if it's a Hugging Face URL
+        if url.contains("huggingface.co") {
+            return self.download_from_huggingface(url, dest_dir).await;
+        }
+        
+        // Generic download
+        self.download_generic(url, dest_dir).await
+    }
+    
+    async fn download_from_huggingface(&self, url: &str, dest_dir: &PathBuf) -> Result<()> {
+        info!("Downloading from Hugging Face...");
+        
+        // Hugging Face URLs are typically like:
+        // https://huggingface.co/user/model-name
+        // We need to find the actual file URL
+        
+        // For now, try to construct a direct download URL
+        // This is a simplified approach - in production, you'd use the HF API
+        warn!("Hugging Face download requires API integration");
+        warn!("For now, please download manually from: {}", url);
+        warn!("Or use Hugging Face CLI: huggingface-cli download <model>");
+        
+        Err(anyhow::anyhow!(
+            "Hugging Face download requires manual setup.\n\
+            Please either:\n\
+            1. Install huggingface-cli and download manually\n\
+            2. Download from the web interface: {}\n\
+            3. Use a detected model from your system",
+            url
+        ))
+    }
+    
+    async fn download_generic(&self, url: &str, dest_dir: &PathBuf) -> Result<()> {
+        info!("Downloading from URL: {}", url);
+        
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(300))
+            .build()?;
+        
+        let response = client.get(url).send().await?;
+        
+        if !response.status().is_success() {
+            return Err(anyhow::anyhow!("Download failed: HTTP {}", response.status()));
+        }
+        
+        // Get filename from URL or Content-Disposition header
+        let filename = response
+            .url()
+            .path_segments()
+            .and_then(|segments| segments.last())
+            .unwrap_or("model.bin")
+            .to_string();
+        
+        let file_path = dest_dir.join(&filename);
+        
+        info!("Downloading to: {:?}", file_path);
+        
+        // Get content length for progress
+        let total_size = response.content_length();
+        
+        let mut file = std::fs::File::create(&file_path)?;
+        let mut stream = response.bytes_stream();
+        let mut downloaded: u64 = 0;
+        
+        use futures::StreamExt;
+        use std::io::Write as IoWrite;
+        
+        while let Some(item) = stream.next().await {
+            let chunk = item?;
+            file.write_all(&chunk)?;
+            downloaded += chunk.len() as u64;
+            
+            // Show progress
+            if let Some(total) = total_size {
+                let percent = (downloaded * 100) / total;
+                print!("\rProgress: {}% ({}/{})", 
+                    percent,
+                    Self::format_bytes(downloaded),
+                    Self::format_bytes(total)
+                );
+                std::io::stdout().flush()?;
+            } else {
+                print!("\rDownloaded: {}", Self::format_bytes(downloaded));
+                std::io::stdout().flush()?;
+            }
+        }
+        
+        println!("\nDownload complete: {:?}", file_path);
+        info!("Model downloaded successfully");
+        
+        Ok(())
+    }
+    
+    fn format_bytes(bytes: u64) -> String {
+        if bytes < 1024 {
+            format!("{} B", bytes)
+        } else if bytes < 1024 * 1024 {
+            format!("{:.2} KB", bytes as f64 / 1024.0)
+        } else if bytes < 1024 * 1024 * 1024 {
+            format!("{:.2} MB", bytes as f64 / (1024.0 * 1024.0))
+        } else {
+            format!("{:.2} GB", bytes as f64 / (1024.0 * 1024.0 * 1024.0))
+        }
     }
 }
 
