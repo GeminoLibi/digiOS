@@ -65,10 +65,17 @@ impl ModelManager {
         // Check for model file with config name
         let model_file = self.config.local_path.join(&self.config.name);
         if model_file.exists() {
+            // Check if it's a placeholder (don't count those as real models)
+            if let Ok(contents) = std::fs::read_to_string(&model_file) {
+                if contents.contains("digiOS Model Placeholder") || 
+                   contents.contains("TODO: Implement actual code generation") {
+                    return Ok(false); // Placeholder doesn't count
+                }
+            }
             return Ok(true);
         }
         
-        // Also check for common placeholder names
+        // Also check for common placeholder names (but verify they're not placeholders)
         let placeholder_names = [
             "digios-default",
             "digios-default-small",
@@ -76,8 +83,15 @@ impl ModelManager {
         ];
         
         for name in &placeholder_names {
-            if self.config.local_path.join(name).exists() {
-                return Ok(true);
+            let path = self.config.local_path.join(name);
+            if path.exists() {
+                // Check if it's actually a placeholder
+                if let Ok(contents) = std::fs::read_to_string(&path) {
+                    if !contents.contains("digiOS Model Placeholder") &&
+                       !contents.contains("TODO: Implement actual code generation") {
+                        return Ok(true); // Real model file
+                    }
+                }
             }
         }
         

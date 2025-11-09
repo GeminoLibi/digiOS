@@ -52,31 +52,45 @@ impl ModelLoader {
         }
         // Check for LM Studio model (local file path)
         else if path.exists() && path.is_file() {
-            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if matches!(ext, "gguf" | "bin" | "safetensors" | "pt" | "pth") {
-                model_name = path.file_stem()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("model")
-                    .to_string();
-                
-                // Try LM Studio first (if server is running)
-                let lm_client = LMStudioClient::new(path.clone());
-                if lm_client.check_available().await.unwrap_or(false) {
-                    info!("LM Studio server detected for model: {:?}", path);
-                    lm_studio_client = Some(lm_client);
-                } else {
-                    // Check if it's in Hugging Face cache
-                    let path_str_lower = path_str.to_lowercase();
-                    if path_str_lower.contains("huggingface") || path_str_lower.contains(".cache") {
-                        let hf_client = HuggingFaceClient::new(path.clone());
-                        if hf_client.check_available().await.unwrap_or(false) {
-                            info!("Hugging Face model detected: {:?}", path);
-                            huggingface_client = Some(hf_client);
+            // Check if this is a placeholder file (skip it)
+            let is_placeholder = if let Ok(contents) = std::fs::read_to_string(path) {
+                contents.contains("digiOS Model Placeholder") || 
+                contents.contains("TODO: Implement actual code generation") ||
+                contents.contains("Status: Placeholder")
+            } else {
+                false
+            };
+            
+            if is_placeholder {
+                warn!("Skipping placeholder model file: {:?}", path);
+                model_name = path_str.to_string();
+            } else {
+                let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+                if matches!(ext, "gguf" | "bin" | "safetensors" | "pt" | "pth") {
+                    model_name = path.file_stem()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("model")
+                        .to_string();
+                    
+                    // Try LM Studio first (if server is running)
+                    let lm_client = LMStudioClient::new(path.clone());
+                    if lm_client.check_available().await.unwrap_or(false) {
+                        info!("LM Studio server detected for model: {:?}", path);
+                        lm_studio_client = Some(lm_client);
+                    } else {
+                        // Check if it's in Hugging Face cache
+                        let path_str_lower = path_str.to_lowercase();
+                        if path_str_lower.contains("huggingface") || path_str_lower.contains(".cache") {
+                            let hf_client = HuggingFaceClient::new(path.clone());
+                            if hf_client.check_available().await.unwrap_or(false) {
+                                info!("Hugging Face model detected: {:?}", path);
+                                huggingface_client = Some(hf_client);
+                            }
                         }
                     }
+                } else {
+                    model_name = path_str.to_string();
                 }
-            } else {
-                model_name = path_str.to_string();
             }
         } else {
             model_name = path_str.to_string();
@@ -147,7 +161,19 @@ impl ModelLoader {
         // Use LM Studio if available
         if let Some(ref client) = self.lm_studio_client {
             info!("Calling LM Studio for inference");
-            return client.generate(prompt).await;
+            match client.generate(prompt).await {
+                Ok(response) => return Ok(response),
+                Err(e) => {
+                    warn!("LM Studio inference failed: {}. Model may not be loaded in LM Studio.", e);
+                    return Err(anyhow::anyhow!(
+                        "LM Studio inference failed. Make sure:\n\
+                        1. LM Studio is running\n\
+                        2. A model is loaded in LM Studio\n\
+                        3. Local server is enabled (Settings > Local Server)\n\
+                        Error: {}", e
+                    ));
+                }
+            }
         }
         
         // Use Hugging Face if available
