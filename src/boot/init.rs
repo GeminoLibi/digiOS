@@ -97,17 +97,7 @@ impl InitSystem {
         
         // Check if human interface should be enabled
         if std::env::var("DIGIOS_HUMAN_INTERFACE").is_ok() {
-            // Start terminal in background task
-            let terminal_arc = interaction.terminal.clone();
-            tokio::spawn(async move {
-                if let Ok(mut terminal) = terminal_arc.write().await {
-                    if let Some(ref mut term) = *terminal {
-                        if let Err(e) = term.start().await {
-                            error!("Terminal interface error: {}", e);
-                        }
-                    }
-                }
-            });
+            interaction.start_terminal().await?;
         }
         
         self.interaction = Some(interaction);
